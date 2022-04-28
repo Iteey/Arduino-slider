@@ -1,0 +1,3 @@
+LCD Russian Cyrillic characters:
+https://github.com/mk90/LiquidCrystalRus/blob/master/examples/AlphabetRus/AlphabetRus.pde
+https://drive.google.com/file/d/1IyxTT7KAcx3IYHRsjigVHP9rQTwVighz/view
