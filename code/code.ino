@@ -3,6 +3,8 @@
 #include <LCD_1602_RUS.h>
 #include "LedControl.h"
 #include <IRremote.h>
+#include <Keypad.h> 
+#include <Stepper.h>
 #include <Keypad.h>
 
 LCD_1602_RUS lcd(0x27, 20, 21); // Устанавливаем дисплей
@@ -11,6 +13,17 @@ unsigned long delaytime = 250;
 int RECV_PIN = 47;
 //IrReceiver irrecv(RECV_PIN);
 decode_results results;
+
+
+//Stepper
+int MD_IN1 = 4;
+int MD_IN2 = 5;
+int MD_IN3 = 6;
+int MD_IN4 = 7;
+const int stepsPerRevolution = 200;
+Stepper myStepper(stepsPerRevolution, MD_IN1, MD_IN2, MD_IN3, MD_IN4);
+
+
 
 //LED drawings
 unsigned char questionMark[] = {0x3C, 0x7E, 0x66, 0x0C, 0x18, 0x00, 0x18, 0x18};
@@ -56,6 +69,11 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 void setup() {
   Serial.begin(9600); // initialize the serial port:
 
+
+  //Stepper
+  myStepper.setSpeed(60);
+
+  
   //Датчик пульта
   IrReceiver.begin(RECV_PIN);
 
@@ -89,51 +107,54 @@ int settingEndTime = 0;
 String enteredSpeed = "";
 
 void loop() {
-  Serial.println(results.value);
-  if (millis() - settingStartTime >= 5000 && !settingDone && settingGoing) {//for testing
-    settingGoing = false;
-    settingDone = true;
-  }
-
-  if (settingFlag) {
-    printSetting();
-    settingFlag = false;
-  }
-
-  if (getRemoteSignal() == "OK" && !settingGoing && !settingDone) {
-    settingGoing = true;
-    settingStartTime = millis();
-    clearDisplays();
-    printSettingOngoing();
-  }
-
-  if (settingGoing) {
-    long distL = getDistanceLeft();
-    long distR = getDistanceRight();
-    lcd.setCursor(0, 1);
-    //lcd.print("Лв:" + String(distL) + " Пр:" + String(distR));
-    int timeSeconds = floor((millis() - settingStartTime) / 1000);
-    //lcd.print("Время: " + String(timeSeconds) + "сек");
-    lcd.setCursor(7, 1);
-    lcd.print(timeSeconds);
-    lcd.setCursor(9, 1);
-    lcd.print("сек");
-  }
-
-  if (settingDone && !printedDone) {
-    clearDisplays();
-    printSettingDone();
-    printedDone = true;
-    settingEndTime = millis();
-    //возвращение к начальному положению
-  }
-
-  if (millis() - settingEndTime >= 2000 && settingDone) {//когда вернулись к начальному положению после настройки. пока что, для тестирования, просто ждём 2сек
-    String input = getRemoteSignal();
-    if (isNumber(input)) {
-      enteredSpeed += input;
-    }
-    printSpeedQuestion(inputToSpeed(enteredSpeed));
+//  if (millis() - settingStartTime >= 5000 && !settingDone && settingGoing) {//for testing
+//    settingGoing = false;
+//    settingDone = true;
+//  }
+//
+//  if (settingFlag) {
+//    printSetting();
+//    settingFlag = false;
+//  }
+//
+//  if (getRemoteSignal() == "OK" && !settingGoing && !settingDone) {
+//    settingGoing = true;
+//    settingStartTime = millis();
+//    clearDisplays();
+//    printSettingOngoing();
+//  }
+//
+//  if (settingGoing) {
+//    long distL = getDistanceLeft();
+//    long distR = getDistanceRight();
+//    lcd.setCursor(0, 1);
+//    //lcd.print("Лв:" + String(distL) + " Пр:" + String(distR));
+//    int timeSeconds = floor((millis() - settingStartTime) / 1000);
+//    //lcd.print("Время: " + String(timeSeconds) + "сек");
+//    lcd.setCursor(7, 1);
+//    lcd.print(timeSeconds);
+//    lcd.setCursor(9, 1);
+//    lcd.print("сек");
+//  }
+//
+//  if (settingDone && !printedDone) {
+//    clearDisplays();
+//    printSettingDone();
+//    printedDone = true;
+//    settingEndTime = millis();
+//    //возвращение к начальному положению
+//  }
+//
+//  if (millis() - settingEndTime >= 2000 && settingDone) {//когда вернулись к начальному положению после настройки. пока что, для тестирования, просто ждём 2сек
+//    String input = getRemoteSignal();
+//    if (isNumber(input)) {
+//      enteredSpeed += input;
+//    }
+//    printSpeedQuestion(inputToSpeed(enteredSpeed));
+//  }
+long ToRight = getDistanceRight();
+if (ToRight > 5){
+moveRight();
   }
 }
 
@@ -158,6 +179,10 @@ String getKeypadSignal() { //needs testing
 }
 
 String getRemoteSignal() {
+  if (irrecv.decode(&results)) {
+    
+    if (results.value == 0XFFFFFFF)
+      results.value = key_value;
   if (IrReceiver.decode()) {
     if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
       return "";
@@ -336,6 +361,10 @@ void printSpeedQuestion(float speedMSec) {
   lcd.print("м/c [A][OK]");
   drawLED(speedClock);
 }
+ void moveRight(){
+  myStepper.step(stepsPerRevolution);
+  delay(500);
+ }
 
 float inputToSpeed(String keyInputs) {
   float transformedFloat = 0.00;
