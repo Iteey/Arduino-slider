@@ -234,8 +234,8 @@ String getRemoteSignal() {
         break ;
     }
     key_value = results.value;
-    irrecv.resume();
   }
+  irrecv.resume();
   return key;
 }
 
