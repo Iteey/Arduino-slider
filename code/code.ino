@@ -1,4 +1,4 @@
-// Include the library for LCD1602 Display & I2C Serial Interface Adapter [M1]
+// Include the library for LCD1602 display & I2C Serial Interface Adapter [M1]
 #include <Wire.h>
 #include <LCD_1602_RUS.h>
 #include "LedControl.h"
@@ -89,6 +89,7 @@ int settingEndTime = 0;
 String enteredSpeed = "";
 
 void loop() {
+  Serial.println(results.value);
   if (millis() - settingStartTime >= 5000 && !settingDone && settingGoing) {//for testing
     settingGoing = false;
     settingDone = true;
@@ -158,9 +159,12 @@ String getKeypadSignal() { //needs testing
 
 String getRemoteSignal() {
   if (irrecv.decode(&results)) {
-    
-    if (results.value == 0XFFFFFFF)
+    if (results.value == key_value) {
+      key_value = results.value = 0XFFFFFFF;
+    }
+    if (results.value == 0XFFFFFFF) {
       results.value = key_value;
+    }
     key = "";
 
     switch (results.value) {
