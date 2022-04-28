@@ -3,7 +3,7 @@
 #include <LCD_1602_RUS.h>
 #include "LedControl.h"
 #include <IRremote.h>
-#include <Keypad.h> 
+#include <Keypad.h>
 #include <Stepper.h>
 #include <Keypad.h>
 
@@ -22,7 +22,7 @@ int MD_IN3 = 6;
 int MD_IN4 = 7;
 const int stepsPerRevolution = 200;
 Stepper myStepper(stepsPerRevolution, MD_IN1, MD_IN2, MD_IN3, MD_IN4);
-
+bool MovingRight = false;
 
 
 //LED drawings
@@ -71,9 +71,9 @@ void setup() {
 
 
   //Stepper
-  myStepper.setSpeed(60);
+  myStepper.setSpeed(50);
 
-  
+
   //Датчик пульта
   IrReceiver.begin(RECV_PIN);
 
@@ -106,58 +106,90 @@ int settingStartTime = 0;
 int settingEndTime = 0;
 String enteredSpeed = "";
 
+long timeReachedRight = 0;
+long timeReachedLeft = 0;
+
 void loop() {
-//  if (millis() - settingStartTime >= 5000 && !settingDone && settingGoing) {//for testing
-//    settingGoing = false;
-//    settingDone = true;
+  //  if (millis() - settingStartTime >= 5000 && !settingDone && settingGoing) {//for testing
+  //    settingGoing = false;
+  //    settingDone = true;
+  //  }
+  //
+  //  if (settingFlag) {
+  //    printSetting();
+  //    settingFlag = false;
+  //  }
+  //
+  //  if (getRemoteSignal() == "OK" && !settingGoing && !settingDone) {
+  //    settingGoing = true;
+  //    settingStartTime = millis();
+  //    clearDisplays();
+  //    printSettingOngoing();
+  //  }
+  //
+  //  if (settingGoing) {
+  //    long distL = getDistanceLeft();
+  //    long distR = getDistanceRight();
+  //    lcd.setCursor(0, 1);
+  //    //lcd.print("Лв:" + String(distL) + " Пр:" + String(distR));
+  //    int timeSeconds = floor((millis() - settingStartTime) / 1000);
+  //    //lcd.print("Время: " + String(timeSeconds) + "сек");
+  //    lcd.setCursor(7, 1);
+  //    lcd.print(timeSeconds);
+  //    lcd.setCursor(9, 1);
+  //    lcd.print("сек");
+  //  }
+  //
+  //  if (settingDone && !printedDone) {
+  //    clearDisplays();
+  //    printSettingDone();
+  //    printedDone = true;
+  //    settingEndTime = millis();
+  //    //возвращение к начальному положению
+  //  }
+  //
+  //  if (millis() - settingEndTime >= 2000 && settingDone) {//когда вернулись к начальному положению после настройки. пока что, для тестирования, просто ждём 2сек
+  //    String input = getRemoteSignal();
+  //    if (isNumber(input)) {
+  //      enteredSpeed += input;
+  //    }
+  //    printSpeedQuestion(inputToSpeed(enteredSpeed));
+  //  }
+  long ToRight = getDistanceRight();
+  long ToLeft = getDistanceLeft();
+//  if (MovingRight) {
+//    long timer = millis()/1000;
+//    Serial.print(timer);
+//    Serial.println(" seconds passed");
 //  }
-//
-//  if (settingFlag) {
-//    printSetting();
-//    settingFlag = false;
-//  }
-//
-//  if (getRemoteSignal() == "OK" && !settingGoing && !settingDone) {
-//    settingGoing = true;
-//    settingStartTime = millis();
-//    clearDisplays();
-//    printSettingOngoing();
-//  }
-//
-//  if (settingGoing) {
-//    long distL = getDistanceLeft();
-//    long distR = getDistanceRight();
-//    lcd.setCursor(0, 1);
-//    //lcd.print("Лв:" + String(distL) + " Пр:" + String(distR));
-//    int timeSeconds = floor((millis() - settingStartTime) / 1000);
-//    //lcd.print("Время: " + String(timeSeconds) + "сек");
-//    lcd.setCursor(7, 1);
-//    lcd.print(timeSeconds);
-//    lcd.setCursor(9, 1);
-//    lcd.print("сек");
-//  }
-//
-//  if (settingDone && !printedDone) {
-//    clearDisplays();
-//    printSettingDone();
-//    printedDone = true;
-//    settingEndTime = millis();
-//    //возвращение к начальному положению
-//  }
-//
-//  if (millis() - settingEndTime >= 2000 && settingDone) {//когда вернулись к начальному положению после настройки. пока что, для тестирования, просто ждём 2сек
-//    String input = getRemoteSignal();
-//    if (isNumber(input)) {
-//      enteredSpeed += input;
-//    }
-//    printSpeedQuestion(inputToSpeed(enteredSpeed));
-//  }
-long ToRight = getDistanceRight();
-if (ToRight > 5){
-moveRight();
+
+  if (ToRight < 6) {
+    MovingRight = false;
+    timeReachedRight = millis();
+  }
+  else if (ToLeft < 6) {
+    MovingRight = true;
+    timeReachedLeft = millis();
+//    Serial.print("Я доехал за ");
+//    Serial.println(timeReachedLeft-timeReachedRight);
+  }
+  
+  if (MovingRight) {
+    moveRight();
+//    Serial.println("Moving right...");
+  }
+  else {
+    moveLeft();
+//    Serial.println("Moving left...");
   }
 }
 
+void moveRight() {
+  myStepper.step(-1);
+}
+void moveLeft() {
+  myStepper.step(1);
+}
 //led.setChar(0,0,'a',false);
 bool isNumber(String numberString) {
   if (numberString == "0" || numberString == "1" || numberString == "2" ||
@@ -179,10 +211,8 @@ String getKeypadSignal() { //needs testing
 }
 
 String getRemoteSignal() {
-  if (irrecv.decode(&results)) {
-    
-    if (results.value == 0XFFFFFFF)
-      results.value = key_value;
+  if (results.value == 0XFFFFFFF)
+    results.value = key_value;
   if (IrReceiver.decode()) {
     if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
       return "";
@@ -326,9 +356,9 @@ long getDistanceLeft() {
   duration = pulseIn(echoPinLeft, HIGH);
   // конвертируем время в расстояние:
   cm = (duration / 2) / 29.1;
-  Serial.print(cm);
-  Serial.print("cm");  //  "сантиметров"
-  Serial.println();
+//  Serial.print(cm);
+//  Serial.print("cm");  //  "сантиметров"
+//  Serial.println();
 
   return cm;
 }
@@ -361,10 +391,6 @@ void printSpeedQuestion(float speedMSec) {
   lcd.print("м/c [A][OK]");
   drawLED(speedClock);
 }
- void moveRight(){
-  myStepper.step(stepsPerRevolution);
-  delay(500);
- }
 
 float inputToSpeed(String keyInputs) {
   float transformedFloat = 0.00;
