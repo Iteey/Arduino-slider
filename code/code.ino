@@ -3,6 +3,8 @@
 #include <LCD_1602_RUS.h>
 #include "LedControl.h"
 #include <IRremote.h>
+#include <Keypad.h> 
+#include <Stepper.h>
 #include <Keypad.h>
 
 LCD_1602_RUS lcd(0x27, 20, 21); // Устанавливаем дисплей
@@ -12,6 +14,10 @@ int RECV_PIN = 47;
 //IrReceiver irrecv(RECV_PIN);
 decode_results results;
 
+
+//Stepper
+const int stepsPerRevolution = 200;
+Stepper myStepper(stepsPerRevolution, 5, 6);
 //LED drawings
 unsigned char questionMark[] = {0x3C, 0x7E, 0x66, 0x0C, 0x18, 0x00, 0x18, 0x18};
 unsigned char wrench[] = {0x0C, 0x18, 0x19, 0x1F, 0x3E, 0x70, 0xE0, 0xC0};
@@ -56,6 +62,12 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 void setup() {
   Serial.begin(9600); // initialize the serial port:
 
+
+  //Stepper
+  // set the speed at 60 rpm:
+  myStepper.setSpeed(60);
+
+  
   //Датчик пульта
   IrReceiver.begin(RECV_PIN);
 
@@ -89,7 +101,6 @@ int settingEndTime = 0;
 String enteredSpeed = "";
 
 void loop() {
-  Serial.println(results.value);
   if (millis() - settingStartTime >= 5000 && !settingDone && settingGoing) {//for testing
     settingGoing = false;
     settingDone = true;
@@ -158,6 +169,10 @@ String getKeypadSignal() { //needs testing
 }
 
 String getRemoteSignal() {
+  if (irrecv.decode(&results)) {
+    
+    if (results.value == 0XFFFFFFF)
+      results.value = key_value;
   if (IrReceiver.decode()) {
     if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
       return "";
@@ -253,6 +268,14 @@ void printSettingOngoing() {
   lcd.setCursor(0, 0);
   lcd.print("Идёт настройка..");
   drawLED(wrench);
+
+
+  //Stepper
+  DistRight=getDistanceLeft()
+  if (DistRight < 5){
+  myStepper.step(stepsPerRevolution);
+  delay(500);
+  }
 }
 
 void printSetting() {
