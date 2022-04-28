@@ -19,12 +19,11 @@ unsigned char OK[] = {0xE9, 0xA9, 0xAA, 0xAC, 0xAC, 0xAA, 0xA9, 0xE9};
 unsigned char speedClock[] = {0x00, 0x1E, 0x69, 0x29, 0xEF, 0x21, 0x1E, 0x00};
 
 //Remote
-unsigned char key_value = 0;
+long savedCommand; //для функции getRemoteSignal() чтобы при удержании кнопки она записывалась всего 1 раз
 String key = "";
 bool settingFlag = true;
 bool settingGoing = false;
 bool settingDone = false;
-
 
 // Ultrasonic sensor
 int trigPinRight = 39;    //
@@ -163,8 +162,12 @@ String getRemoteSignal() {
       return "";
     }
     IrReceiver.resume();
+    if (IrReceiver.decodedIRData.command == savedCommand) {
+      return "";
+    }
     key = "";
-    switch (IrReceiver.decodedIRData.command) {
+    savedCommand = IrReceiver.decodedIRData.command;
+    switch (savedCommand) {
       case 0x46://up 0x46
         Serial.println("UP");
         key = "UP";
