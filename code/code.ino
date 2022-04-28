@@ -3,13 +3,13 @@
 #include <LCD_1602_RUS.h>
 #include "LedControl.h"
 #include <IRremote.h>
-#include <Keypad.h> 
+#include <Keypad.h>
 
 LCD_1602_RUS lcd(0x27, 20, 21); // Устанавливаем дисплей
 LedControl led = LedControl(10, 8, 9, 1);
 unsigned long delaytime = 250;
 int RECV_PIN = 47;
-IRrecv irrecv(RECV_PIN);
+//IrReceiver irrecv(RECV_PIN);
 decode_results results;
 
 //LED drawings
@@ -41,10 +41,10 @@ const byte COLS = 4; // Количество строк
 
 char keys[ROWS][COLS] =
 {
-{'1','2','3','A'},
-{'4','5','6','B'},
-{'7','8','9','C'},
-{'*','0','#','D'}
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
 };
 
 byte rowPins[ROWS] = {37, 35, 33, 31}; // Выводы, подключение к строкам
@@ -57,7 +57,7 @@ void setup() {
   Serial.begin(9600); // initialize the serial port:
 
   //Датчик пульта
-  irrecv.enableIRIn();
+  IrReceiver.begin(RECV_PIN);
 
   //LCD 1602
   lcd.init();
@@ -139,12 +139,12 @@ void loop() {
 
 //led.setChar(0,0,'a',false);
 bool isNumber(String numberString) {
-  if (numberString == "0" || numberString == "1" || numberString == "2" || 
-      numberString == "3" || numberString == "4" || numberString == "5" || 
+  if (numberString == "0" || numberString == "1" || numberString == "2" ||
+      numberString == "3" || numberString == "4" || numberString == "5" ||
       numberString == "6" || numberString == "7" || numberString == "8" ||
       numberString == "9") {
-        return true;
-      }
+    return true;
+  }
   return false;
 }
 
@@ -158,16 +158,13 @@ String getKeypadSignal() { //needs testing
 }
 
 String getRemoteSignal() {
-  if (irrecv.decode(&results)) {
-    if (results.value == key_value) {
-      key_value = results.value = 0XFFFFFFF;
+  if (IrReceiver.decode()) {
+    if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
+      return "";
     }
-    if (results.value == 0XFFFFFFF) {
-      results.value = key_value;
-    }
+    IrReceiver.resume();
     key = "";
-
-    switch (results.value) {
+    switch (IrReceiver.decodedIRData.command) {
       case 0xFF629D://up
         Serial.println("UP");
         key = "UP";
@@ -237,9 +234,7 @@ String getRemoteSignal() {
         key = "#";
         break ;
     }
-    key_value = results.value;
   }
-  irrecv.resume();
   return key;
 }
 
@@ -277,10 +272,15 @@ void printSettingDone() {
 }
 
 void printRemoteSignal() {
-  if (irrecv.decode(&results))
+  if (IrReceiver.decode())
   {
-    Serial.println(results.value, HEX); //вывод результатов в монитор порта
-    irrecv.resume(); // прием следующего значения
+    IrReceiver.printIRResultShort(&Serial);
+    if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
+      // We have an unknown protocol here, print more info
+      Serial.println("UNKNOWN");
+    }
+    Serial.println();
+    IrReceiver.resume();
   }
 }
 
@@ -341,13 +341,13 @@ float inputToSpeed(String keyInputs) {
   float transformedFloat = 0.00;
   if (keyInputs == "")
     return transformedFloat;
-    
+
   for (int i = 0; i < 3; i++) {
     int inputLength = min(3, keyInputs.length());
-    String oneInput = String(keyInputs[keyInputs.length()-(inputLength-i)]); //три последних числа в наборе цифер
+    String oneInput = String(keyInputs[keyInputs.length() - (inputLength - i)]); //три последних числа в наборе цифер
     //String oneInput(1, keyInputs[keyInputs.length()-(3-i)]);
     if (i == 0) {
-      transformedFloat += atof(oneInput.c_str()) / 100.0; 
+      transformedFloat += atof(oneInput.c_str()) / 100.0;
     }
     else if (i == 1) {
       transformedFloat += atof(oneInput.c_str()) / 10.0;
