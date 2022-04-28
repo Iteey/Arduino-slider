@@ -89,7 +89,7 @@ int settingEndTime = 0;
 String enteredSpeed = "";
 
 void loop() {
-  Serial.println(results.value);
+//  printRemoteSignal();
   if (millis() - settingStartTime >= 5000 && !settingDone && settingGoing) {//for testing
     settingGoing = false;
     settingDone = true;
@@ -165,71 +165,71 @@ String getRemoteSignal() {
     IrReceiver.resume();
     key = "";
     switch (IrReceiver.decodedIRData.command) {
-      case 0xFF629D://up
+      case 0x46://up 0x46
         Serial.println("UP");
         key = "UP";
         break;
-      case 0xFF22DD://left
+      case 0x44://left 0x44
         Serial.println("LEFT");
         key = "LEFT";
         break;
-      case 0xFF02FD://ok
+      case 0x40://ok 0x40
         Serial.println("OK");
         key = "OK";
         break ;
-      case 0xFFC23D://right
+      case 0x43://right 0x43
         Serial.println("RIGHT");
         key = "RIGHT";
         break ;
-      case 0xFFA857://down
+      case 0x15://down 0x15
         Serial.println("DOWN");
         key = "DOWN";
         break ;
-      case 0xFF6897: //1
+      case 0x16: //1 0x16
         Serial.println("1");
         key = "1";
         break ;
-      case 0xFF9867://2
+      case 0x19://2 0x19
         Serial.println("2");
         key = "2";
         break ;
-      case 0xFFB04F://3
+      case 0xD://3 0xD
         Serial.println("3");
         key = "3";
         break ;
-      case 0xFF30CF://4
+      case 0xC://4 0xC
         Serial.println("4");
         key = "4";
         break ;
-      case 0xFF18E7://5
+      case 0x18://5 0x18
         Serial.println("5");
         key = "5";
         break ;
-      case 0xFF7A85://6
+      case 0x5E://6 0x5E
         Serial.println("6");
         key = "6";
         break ;
-      case 0xFF10EF://7
+      case 0x8://7 0x8
         Serial.println("7");
         key = "7";
         break ;
-      case 0xFF38C7://8
+      case 0x1C://8 0x1C
         Serial.println("8");
         key = "8";
         break ;
-      case 0xFF5AA5://9
+      case 0x5A://9 0x5A
         Serial.println("9");
         key = "9";
         break ;
-      case 0xFF42BD://*
+      case 0x42://* 0x42
         Serial.println("*");
         key = "*";
         break ;
-      case 0xFF4AB5://0
+      case 0x52://0 0x52
         Serial.println("0");
         key = "0";
         break ;
-      case 0xFF52AD://#
+      case 0x4A://# 0x4A
         Serial.println("#");
         key = "#";
         break ;
